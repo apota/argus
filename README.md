@@ -6,14 +6,21 @@ Argus is a Python library for exploring and managing AWS resources using Boto3. 
 
 > 🚀 **Latest Update**: All major AWS services are now fully implemented! The library includes complete support for S3, Lambda, ECS (with scaling), Step Functions, DynamoDB, EventBridge, Parameter Store, SQS, and CloudWatch (with log querying). Each service has comprehensive read/write operations, examples, and test coverage.
 
+> 🆕 **Recent Enhancements**: 
+> - **ECS Module**: Completely rewritten with essential operations and scaling capabilities (`scale_up`, `scale_down`, `scale_service`)
+> - **CloudWatch Module**: Brand new implementation with comprehensive log querying, metrics management, and alarm operations
+> - **Enhanced Testing**: Comprehensive test suite with import validation and functionality verification
+
 ## Features
 
 - **Modular Structure**: Separate read and write modules for each AWS service
-- **Consistent Interface**: Unified approach across all AWS services
+- **Consistent Interface**: Unified approach across all AWS services using AWSClientManager pattern
 - **Profile Support**: Uses AWS credential profiles for authentication
 - **Comprehensive Coverage**: Supports major AWS services including S3, Lambda, ECS, Step Functions, DynamoDB, EventBridge, Parameter Store, SQS, and CloudWatch
 - **Error Handling**: Custom exception handling for better error management
 - **Logging**: Built-in logging for debugging and monitoring
+- **Scaling Operations**: Built-in ECS service scaling with dedicated methods
+- **Log Querying**: Advanced CloudWatch log search, filtering, and export capabilities
 
 ## Installation
 
@@ -52,6 +59,7 @@ Argus includes a comprehensive test suite and example scripts:
 ### Example Scripts
 - **`demo.py`**: Interactive demo showcasing all AWS services
 - **`ecs_example.py`**: ECS-specific examples with scaling operations
+- **`ecs_scaling_example.py`**: Advanced ECS scaling demonstrations
 - **`cloudwatch_example.py`**: CloudWatch log querying and metrics examples
 
 Run the demo to explore all services:
@@ -126,12 +134,12 @@ argus/
     │   │   └── ps_reader.py       # Parameter Store read operations
     │   └── write/
     │       └── ps_writer.py       # Parameter Store write operations
-    └── sqs/
-        ├── __init__.py
-        ├── read/
-        │   └── sqs_reader.py      # SQS read operations
-        └── write/
-            └── sqs_writer.py      # SQS write operations
+    ├── sqs/
+    │   ├── __init__.py
+    │   ├── read/
+    │   │   └── sqs_reader.py      # SQS read operations
+    │   └── write/
+    │       └── sqs_writer.py      # SQS write operations
     └── cloudwatch/
         ├── __init__.py
         ├── read/
@@ -459,6 +467,7 @@ ecs_writer.scale_down('my-web-service', 'my-new-cluster', 1)  # Decrement by 1
 
 #### Reading CloudWatch Logs and Metrics
 ```python
+from datetime import datetime, timedelta
 from common.aws_client import AWSClientManager
 from cloudwatch import CloudWatchReader, CloudWatchWriter
 
@@ -514,6 +523,8 @@ cpu_metrics = cw_reader.get_metric_statistics(
 
 #### Writing CloudWatch Resources
 ```python
+from datetime import datetime, timedelta
+
 # Initialize CloudWatch writer
 cw_writer = CloudWatchWriter(client_manager)
 
@@ -625,6 +636,25 @@ buckets = s3_reader.list_buckets()  # This will log the operation
 ```
 
 ## Advanced Configuration
+
+### AWSClientManager Pattern
+
+All Argus modules use the consistent AWSClientManager pattern for initialization:
+
+```python
+from common.aws_client import AWSClientManager
+from ecs import ECSReader, ECSWriter
+from cloudwatch import CloudWatchReader, CloudWatchWriter
+
+# Initialize client manager once
+client_manager = AWSClientManager('default', 'us-east-1')
+
+# Use with any service
+ecs_reader = ECSReader(client_manager)
+ecs_writer = ECSWriter(client_manager)
+cw_reader = CloudWatchReader(client_manager)
+cw_writer = CloudWatchWriter(client_manager)
+```
 
 ### Custom Client Configuration
 
