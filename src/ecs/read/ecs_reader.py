@@ -393,3 +393,59 @@ class ECSReader:
             error_message = f"Failed to list ECS container instances: {e.response['Error']['Message']}"
             logger.error(error_message)
             raise AWSResourceError(error_message) from e
+    
+    def get_service_task_count(self, cluster_name: str, service_name: str) -> int:
+        """
+        Get the desired task count for a given ECS service.
+        
+        Args:
+            cluster_name: Name of the ECS cluster
+            service_name: Name of the ECS service
+            
+        Returns:
+            The desired task count for the service
+            
+        Raises:
+            AWSResourceError: If there's an error retrieving the service
+        """
+        try:
+            response = self.ecs_client.describe_services(
+                cluster=cluster_name,
+                services=[service_name]
+            )
+            services = response.get('services', [])
+            if not services:
+                raise ResourceNotFoundError(f"Service {service_name} not found in cluster {cluster_name}")
+            return services[0].get('desiredCount', 0)
+        except ClientError as e:
+            error_message = f"Failed to get task count for service {service_name}: {e.response['Error']['Message']}"
+            logger.error(error_message)
+            raise AWSResourceError(error_message) from e
+
+    def get_running_task_count(self, cluster_name: str, service_name: str) -> int:
+        """
+        Get the running task count for a given ECS service.
+        
+        Args:
+            cluster_name: Name of the ECS cluster
+            service_name: Name of the ECS service
+            
+        Returns:
+            The running task count for the service
+            
+        Raises:
+            AWSResourceError: If there's an error retrieving the service
+        """
+        try:
+            response = self.ecs_client.describe_services(
+                cluster=cluster_name,
+                services=[service_name]
+            )
+            services = response.get('services', [])
+            if not services:
+                raise ResourceNotFoundError(f"Service {service_name} not found in cluster {cluster_name}")
+            return services[0].get('runningCount', 0)
+        except ClientError as e:
+            error_message = f"Failed to get running task count for service {service_name}: {e.response['Error']['Message']}"
+            logger.error(error_message)
+            raise AWSResourceError(error_message) from e

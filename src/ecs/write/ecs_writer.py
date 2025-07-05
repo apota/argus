@@ -458,3 +458,53 @@ class ECSWriter:
                 error_message = f"Failed to stop ECS task {task_arn}: {e.response['Error']['Message']}"
                 logger.error(error_message)
                 raise AWSResourceError(error_message) from e
+    
+    def scale_service(self, service_name: str, cluster: str, desired_count: int) -> Dict[str, Any]:
+        """
+        Scale an ECS service up or down by setting the desired task count.
+        Args:
+            service_name: Name of the ECS service
+            cluster: Name of the ECS cluster
+            desired_count: The new desired number of tasks
+        Returns:
+            The updated service configuration
+        Raises:
+            ResourceNotFoundError: If the service doesn't exist
+            AWSResourceError: If there's an error updating the service
+        """
+        return self.update_service(
+            service_name=service_name,
+            cluster=cluster,
+            desired_count=desired_count
+        )
+
+    def scale_up(self, service_name: str, cluster: str, increment: int = 1) -> Dict[str, Any]:
+        """
+        Scale up an ECS service by increasing the desired task count.
+        Args:
+            service_name: Name of the ECS service
+            cluster: Name of the ECS cluster
+            increment: Number of tasks to add (default: 1)
+        Returns:
+            The updated service configuration
+        """
+        from ecs.read.ecs_reader import ECSReader
+        reader = ECSReader()
+        current_count = reader.get_service_task_count(cluster, service_name)
+        return self.scale_service(service_name, cluster, current_count + increment)
+
+    def scale_down(self, service_name: str, cluster: str, decrement: int = 1) -> Dict[str, Any]:
+        """
+        Scale down an ECS service by decreasing the desired task count.
+        Args:
+            service_name: Name of the ECS service
+            cluster: Name of the ECS cluster
+            decrement: Number of tasks to remove (default: 1)
+        Returns:
+            The updated service configuration
+        """
+        from ecs.read.ecs_reader import ECSReader
+        reader = ECSReader()
+        current_count = reader.get_service_task_count(cluster, service_name)
+        new_count = max(0, current_count - decrement)
+        return self.scale_service(service_name, cluster, new_count)
