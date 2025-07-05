@@ -1,0 +1,1 @@
+# ECS write module init

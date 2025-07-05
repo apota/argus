@@ -1,0 +1,1 @@
+# Lambda write module init
