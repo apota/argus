@@ -1,0 +1,1 @@
+# EventBridge read module init

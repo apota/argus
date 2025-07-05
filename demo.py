@@ -173,6 +173,132 @@ def demonstrate_ecs():
         print(f"❌ Error in ECS operations: {e}\n")
 
 
+def demonstrate_step_functions():
+    """Demonstrate Step Functions operations."""
+    try:
+        from src.stepfunction.read.sf_reader import StepFunctionReader
+        
+        print("🔄 Step Functions Operations Demo")
+        print("=" * 50)
+        
+        # Initialize Step Functions reader
+        sf_reader = StepFunctionReader()
+        
+        # List state machines
+        print("📋 Listing Step Functions state machines...")
+        state_machines = sf_reader.list_state_machines()
+        print(f"Found {len(state_machines)} state machines:")
+        for sm in state_machines[:3]:  # Show first 3
+            print(f"  • {sm['name']} ({sm['type']}) - {sm['status']}")
+        
+        print("")
+        
+    except Exception as e:
+        print(f"❌ Error exploring Step Functions: {e}")
+        print("")
+
+
+def demonstrate_dynamodb():
+    """Demonstrate DynamoDB operations."""
+    try:
+        from src.dynamodb.read.dynamodb_reader import DynamoDBReader
+        
+        print("🗃️  DynamoDB Operations Demo")
+        print("=" * 50)
+        
+        # Initialize DynamoDB reader
+        db_reader = DynamoDBReader()
+        
+        # List tables
+        print("📋 Listing DynamoDB tables...")
+        tables = db_reader.list_tables()
+        print(f"Found {len(tables)} DynamoDB tables:")
+        for table in tables[:5]:  # Show first 5
+            print(f"  • {table}")
+        
+        print("")
+        
+    except Exception as e:
+        print(f"❌ Error exploring DynamoDB: {e}")
+        print("")
+
+
+def demonstrate_eventbridge():
+    """Demonstrate EventBridge operations."""
+    try:
+        from src.eventbridge.read.eb_reader import EventBridgeReader
+        
+        print("📡 EventBridge Operations Demo")
+        print("=" * 50)
+        
+        # Initialize EventBridge reader
+        eb_reader = EventBridgeReader()
+        
+        # List event buses
+        print("📋 Listing EventBridge event buses...")
+        event_buses = eb_reader.list_event_buses()
+        print(f"Found {len(event_buses)} event buses:")
+        for bus in event_buses[:3]:  # Show first 3
+            print(f"  • {bus['Name']} - {bus.get('State', 'N/A')}")
+        
+        print("")
+        
+    except Exception as e:
+        print(f"❌ Error exploring EventBridge: {e}")
+        print("")
+
+
+def demonstrate_parameter_store():
+    """Demonstrate Parameter Store operations."""
+    try:
+        from src.parameterstore.read.ps_reader import ParameterStoreReader
+        
+        print("🔧 Parameter Store Operations Demo")
+        print("=" * 50)
+        
+        # Initialize Parameter Store reader
+        ps_reader = ParameterStoreReader()
+        
+        # List parameters
+        print("📋 Listing Parameter Store parameters...")
+        parameters = ps_reader.get_parameters_by_path('/', recursive=False, max_results=10)
+        print(f"Found {len(parameters)} parameters (showing first 10):")
+        for param in parameters[:5]:  # Show first 5
+            print(f"  • {param['Name']} ({param['Type']}) - {param.get('Description', 'No description')[:50]}...")
+        
+        print("")
+        
+    except Exception as e:
+        print(f"❌ Error exploring Parameter Store: {e}")
+        print("")
+
+
+def demonstrate_sqs():
+    """Demonstrate SQS operations."""
+    try:
+        from src.sqs.read.sqs_reader import SQSReader
+        
+        print("📬 SQS Operations Demo")
+        print("=" * 50)
+        
+        # Initialize SQS reader
+        sqs_reader = SQSReader()
+        
+        # List queues
+        print("📋 Listing SQS queues...")
+        queues = sqs_reader.list_queues()
+        print(f"Found {len(queues)} SQS queues:")
+        for queue in queues[:5]:  # Show first 5
+            queue_name = queue.split('/')[-1]
+            print(f"  • {queue_name}")
+        
+        print("")
+        
+    except Exception as e:
+        print(f"❌ Error exploring SQS: {e}")
+        print("")
+
+
 def check_aws_credentials():
     """Check if AWS credentials are configured."""
     try:
@@ -229,6 +355,11 @@ def main():
     demonstrate_s3()
     demonstrate_lambda()
     demonstrate_ecs()
+    demonstrate_step_functions()
+    demonstrate_dynamodb()
+    demonstrate_eventbridge()
+    demonstrate_parameter_store()
+    demonstrate_sqs()
     
     print("🎉 Demo completed!")
     print("Check the Argus documentation for more advanced usage examples.")

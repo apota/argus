@@ -15,24 +15,49 @@ def test_imports():
     
     try:
         # Test common modules
-        from src.common.aws_client import AWSClientManager
-        from src.common.exceptions import AWSResourceError, ResourceNotFoundError
+        from common.aws_client import AWSClientManager
+        from common.exceptions import AWSResourceError, ResourceNotFoundError
         print("✅ Common modules imported successfully")
         
         # Test S3 modules
-        from src.s3.read.s3_reader import S3Reader
-        from src.s3.write.s3_writer import S3Writer
+        from s3.read.s3_reader import S3Reader
+        from s3.write.s3_writer import S3Writer
         print("✅ S3 modules imported successfully")
         
         # Test Lambda modules
-        from src.awslambda.read.lambda_reader import LambdaReader
-        from src.awslambda.write.lambda_writer import LambdaWriter
+        from awslambda.read.lambda_reader import LambdaReader
+        from awslambda.write.lambda_writer import LambdaWriter
         print("✅ Lambda modules imported successfully")
         
         # Test ECS modules
-        from src.ecs.read.ecs_reader import ECSReader
-        from src.ecs.write.ecs_writer import ECSWriter
+        from ecs.read.ecs_reader import ECSReader
+        from ecs.write.ecs_writer import ECSWriter
         print("✅ ECS modules imported successfully")
+        
+        # Test Step Functions modules
+        from stepfunction.read.sf_reader import StepFunctionReader
+        from stepfunction.write.sf_writer import StepFunctionWriter
+        print("✅ Step Functions modules imported successfully")
+        
+        # Test DynamoDB modules
+        from dynamodb.read.dynamodb_reader import DynamoDBReader
+        from dynamodb.write.dynamodb_writer import DynamoDBWriter
+        print("✅ DynamoDB modules imported successfully")
+        
+        # Test EventBridge modules
+        from eventbridge.read.eb_reader import EventBridgeReader
+        from eventbridge.write.eb_writer import EventBridgeWriter
+        print("✅ EventBridge modules imported successfully")
+        
+        # Test Parameter Store modules
+        from parameterstore.read.ps_reader import ParameterStoreReader
+        from parameterstore.write.ps_writer import ParameterStoreWriter
+        print("✅ Parameter Store modules imported successfully")
+        
+        # Test SQS modules
+        from sqs.read.sqs_reader import SQSReader
+        from sqs.write.sqs_writer import SQSWriter
+        print("✅ SQS modules imported successfully")
         
         return True
         
@@ -48,7 +73,7 @@ def test_basic_functionality():
     print("\nTesting basic functionality...")
     
     try:
-        from src.common.aws_client import AWSClientManager
+        from common.aws_client import AWSClientManager
         
         # Test AWS client manager initialization
         client_manager = AWSClientManager('default', 'us-east-1')

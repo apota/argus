@@ -53,7 +53,7 @@ argus/
     │   │   └── s3_reader.py       # S3 read operations
     │   └── write/
     │       └── s3_writer.py       # S3 write operations
-    ├── lambda/
+    ├── awslambda/
     │   ├── __init__.py
     │   ├── read/
     │   │   └── lambda_reader.py   # Lambda read operations

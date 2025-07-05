@@ -1,0 +1,1 @@
+# SQS read module init
