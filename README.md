@@ -4,13 +4,6 @@ Argus is a Python library for exploring and managing AWS resources using Boto3. 
 
 **This is perfect for people who don't like clicking around the AWS console (especially when you are managing several artifacts across multiple accounts), all that pointing and clicking slows you down.**
 
-> 🚀 **Latest Update**: Major AWS services are now implemented! The library includes comprehensive support for S3, Lambda, ECS, Step Functions, DynamoDB, EventBridge, Parameter Store, and SQS. Each service has comprehensive read/write operations, examples, and test coverage.
-
-> 🆕 **Recent Enhancements**: 
-> - **ECS Module**: Comprehensive operations for clusters, services, and task definitions
-> - **Enhanced Testing**: Comprehensive test suite with import validation and functionality verification
-> - **Modular Architecture**: Clean separation of read and write operations for each service
-
 ## Features
 
 - **Modular Structure**: Separate read and write modules for each AWS service
