@@ -4,12 +4,14 @@ Argus is a Python library for exploring and managing AWS resources using Boto3. 
 
 **This is perfect for people who don't like clicking around the AWS console (especially when you are managing several artifacts across multiple accounts), all that pointing and clicking slows you down.**
 
+> 🚀 **Latest Update**: All major AWS services are now fully implemented! The library includes complete support for S3, Lambda, ECS (with scaling), Step Functions, DynamoDB, EventBridge, Parameter Store, SQS, and CloudWatch (with log querying). Each service has comprehensive read/write operations, examples, and test coverage.
+
 ## Features
 
 - **Modular Structure**: Separate read and write modules for each AWS service
 - **Consistent Interface**: Unified approach across all AWS services
 - **Profile Support**: Uses AWS credential profiles for authentication
-- **Comprehensive Coverage**: Supports major AWS services including S3, Lambda, ECS, Step Functions, DynamoDB, EventBridge, Parameter Store, and SQS
+- **Comprehensive Coverage**: Supports major AWS services including S3, Lambda, ECS, Step Functions, DynamoDB, EventBridge, Parameter Store, SQS, and CloudWatch
 - **Error Handling**: Custom exception handling for better error management
 - **Logging**: Built-in logging for debugging and monitoring
 
@@ -29,6 +31,32 @@ pip install -r requirements.txt
 3. Install the package in development mode:
 ```bash
 pip install -e .
+```
+
+4. Verify installation by running tests:
+```bash
+cd src/test
+python test_runner.py
+```
+
+## Testing and Examples
+
+Argus includes a comprehensive test suite and example scripts:
+
+### Test Suite
+- **`src/test/test_runner.py`**: Comprehensive test runner with import and module structure validation
+- **`src/test/test_imports.py`**: Simple import verification for all modules
+- **`src/test/test_quick.py`**: Quick functionality tests without AWS calls
+- **`src/test/test_common.py`**: Unit tests with mocking
+
+### Example Scripts
+- **`demo.py`**: Interactive demo showcasing all AWS services
+- **`ecs_example.py`**: ECS-specific examples with scaling operations
+- **`cloudwatch_example.py`**: CloudWatch log querying and metrics examples
+
+Run the demo to explore all services:
+```bash
+python demo.py
 ```
 
 ## Prerequisites
@@ -104,6 +132,12 @@ argus/
         │   └── sqs_reader.py      # SQS read operations
         └── write/
             └── sqs_writer.py      # SQS write operations
+    └── cloudwatch/
+        ├── __init__.py
+        ├── read/
+        │   └── cloudwatch_reader.py  # CloudWatch read operations
+        └── write/
+            └── cloudwatch_writer.py  # CloudWatch write operations
 ```
 
 ## AWS Credentials Configuration
@@ -414,6 +448,138 @@ service = ecs_writer.create_service(
     desired_count=2,
     launch_type='FARGATE'
 )
+
+# Scale service up/down
+ecs_writer.scale_service('my-web-service', 'my-new-cluster', 5)
+ecs_writer.scale_up('my-web-service', 'my-new-cluster', 2)  # Increment by 2
+ecs_writer.scale_down('my-web-service', 'my-new-cluster', 1)  # Decrement by 1
+```
+
+### CloudWatch Operations
+
+#### Reading CloudWatch Logs and Metrics
+```python
+from common.aws_client import AWSClientManager
+from cloudwatch import CloudWatchReader, CloudWatchWriter
+
+# Initialize AWS client manager
+client_manager = AWSClientManager('default', 'us-east-1')
+
+# Initialize CloudWatch reader
+cw_reader = CloudWatchReader(client_manager)
+
+# List log groups
+log_groups = cw_reader.list_log_groups(prefix='/aws/lambda/', limit=10)
+for lg in log_groups:
+    print(f"Log Group: {lg['logGroupName']}, Size: {lg.get('storedBytes', 0)} bytes")
+
+# List log streams in a group
+log_streams = cw_reader.list_log_streams('/aws/lambda/my-function')
+for stream in log_streams[:3]:
+    print(f"Stream: {stream['logStreamName']}")
+
+# Search for specific log events
+error_logs = cw_reader.search_log_events(
+    log_group_name='/aws/lambda/my-function',
+    search_term='ERROR',
+    hours_back=24
+)
+for event in error_logs[:5]:
+    print(f"Error: {event['message']}")
+
+# Get recent logs
+recent_logs = cw_reader.get_recent_logs(
+    log_group_name='/aws/lambda/my-function',
+    minutes_back=60
+)
+
+# Filter logs with pattern
+filtered_logs = cw_reader.filter_log_events(
+    log_group_name='/aws/lambda/my-function',
+    filter_pattern='[timestamp, request_id, level="ERROR", message]',
+    limit=50
+)
+
+# Get metrics
+cpu_metrics = cw_reader.get_metric_statistics(
+    namespace='AWS/EC2',
+    metric_name='CPUUtilization',
+    dimensions=[{'Name': 'InstanceId', 'Value': 'i-1234567890abcdef0'}],
+    start_time=datetime.utcnow() - timedelta(hours=1),
+    end_time=datetime.utcnow(),
+    period=300,
+    statistics=['Average', 'Maximum']
+)
+```
+
+#### Writing CloudWatch Resources
+```python
+# Initialize CloudWatch writer
+cw_writer = CloudWatchWriter(client_manager)
+
+# Create log group
+cw_writer.create_log_group('my-application-logs', retention_days=30)
+
+# Create log stream
+cw_writer.create_log_stream('my-application-logs', 'stream-1')
+
+# Put log messages
+cw_writer.put_log_message(
+    log_group_name='my-application-logs',
+    log_stream_name='stream-1',
+    message='Application started successfully'
+)
+
+# Put multiple log events
+log_events = [
+    {
+        'timestamp': int(datetime.utcnow().timestamp() * 1000),
+        'message': 'Processing request 1'
+    },
+    {
+        'timestamp': int(datetime.utcnow().timestamp() * 1000) + 1000,
+        'message': 'Request 1 completed'
+    }
+]
+cw_writer.put_log_events('my-application-logs', 'stream-1', log_events)
+
+# Publish custom metrics
+cw_writer.put_metric(
+    namespace='MyApplication',
+    metric_name='RequestCount',
+    value=42,
+    unit='Count',
+    dimensions=[
+        {'Name': 'Environment', 'Value': 'Production'},
+        {'Name': 'Service', 'Value': 'API'}
+    ]
+)
+
+# Create CloudWatch alarm
+cw_writer.create_alarm(
+    alarm_name='HighErrorRate',
+    alarm_description='Alert when error rate is high',
+    metric_name='ErrorRate',
+    namespace='MyApplication',
+    statistic='Average',
+    dimensions=[{'Name': 'Service', 'Value': 'API'}],
+    period=300,
+    evaluation_periods=2,
+    threshold=5.0,
+    comparison_operator='GreaterThanThreshold',
+    alarm_actions=['arn:aws:sns:us-east-1:123456789012:alerts']
+)
+
+# Export logs to S3
+task_id = cw_reader.export_logs_to_s3(
+    log_group_name='my-application-logs',
+    destination_bucket='my-log-archive-bucket',
+    destination_prefix='logs/2024/01/',
+    start_time=datetime.utcnow() - timedelta(days=1),
+    end_time=datetime.utcnow(),
+    task_name='daily-export'
+)
+```
 ```
 
 ## Error Handling
@@ -501,17 +667,64 @@ print(f"Total buckets across all regions: {len(all_buckets)}")
 
 ## Available Services
 
-### Currently Implemented
-- **S3**: Complete read/write operations for buckets and objects
-- **Lambda**: Complete read/write operations for functions, layers, and aliases
-- **ECS**: Complete read/write operations for clusters, services, and task definitions
+### Currently Implemented ✅
 
-### Coming Soon
-- **Step Functions**: State machine management
-- **DynamoDB**: Table and item operations
-- **EventBridge**: Event bus and rule management
-- **Parameter Store**: Parameter management
-- **SQS**: Queue and message operations
+All major AWS services are now fully implemented with comprehensive read and write operations:
+
+- **S3**: Complete read/write operations for buckets and objects
+- **Lambda**: Complete read/write operations for functions, layers, and aliases  
+- **ECS**: Complete read/write operations for clusters, services, and task definitions with scaling capabilities
+- **Step Functions**: Complete state machine management, execution control, and activity operations
+- **DynamoDB**: Complete table and item operations with advanced querying capabilities
+- **EventBridge**: Complete event bus and rule management with archive support
+- **Parameter Store**: Complete parameter management with hierarchical organization
+- **SQS**: Complete queue and message operations with dead letter queue support
+- **CloudWatch**: Complete log querying, metrics management, and alarm operations
+
+### Key Features by Service
+
+#### ECS (Enhanced Implementation)
+- **Scaling Operations**: Built-in methods for scaling services up/down
+- **Task Management**: Complete task lifecycle management
+- **Service Health**: Monitor service status and task counts
+- **Cluster Operations**: Full cluster management capabilities
+
+#### CloudWatch (New Implementation)
+- **Log Operations**: Query, filter, and search CloudWatch logs
+- **Log Management**: Create/delete log groups and streams
+- **Metrics**: Publish custom metrics and retrieve statistics
+- **Alarms**: Create and manage CloudWatch alarms
+- **Export**: Export logs to S3 for archival
+
+#### Step Functions (Fully Implemented)
+- **State Machine Management**: Create, update, and delete state machines
+- **Execution Control**: Start, stop, and monitor executions
+- **Activity Support**: Manage Step Function activities
+- **History Tracking**: Access detailed execution history
+
+#### Parameter Store (Comprehensive Implementation)
+- **Parameter Operations**: Full CRUD operations for parameters
+- **Hierarchical Access**: Get parameters by path with filtering
+- **Version Management**: Access parameter history and versions
+- **Tagging Support**: Complete tag management for parameters
+
+#### EventBridge (Complete Implementation)
+- **Event Bus Management**: Create and manage custom event buses
+- **Rule Operations**: Complete rule lifecycle management
+- **Target Management**: Add/remove targets for rules
+- **Archive Support**: Create and manage event archives
+
+#### DynamoDB (Full Implementation)
+- **Table Operations**: Complete table lifecycle management
+- **Item Operations**: Advanced CRUD with conditional operations
+- **Query & Scan**: Optimized querying with pagination support
+- **Index Management**: Global and local secondary index operations
+
+#### SQS (Complete Implementation)
+- **Queue Management**: Full queue lifecycle operations
+- **Message Operations**: Send, receive, and delete messages
+- **Dead Letter Queues**: Complete DLQ configuration and management
+- **Visibility Timeout**: Advanced message handling
 
 ## Best Practices
 
