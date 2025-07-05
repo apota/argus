@@ -34,6 +34,11 @@ def test_imports():
         from ecs.write.ecs_writer import ECSWriter
         print("✅ ECS modules imported successfully")
         
+        # Test EC2 modules
+        from ec2.read.ec2_reader import EC2Reader
+        from ec2.write.ec2_writer import EC2Writer
+        print("✅ EC2 modules imported successfully")
+        
         # Test Step Functions modules
         from stepfunction.read.sf_reader import StepFunctionReader
         from stepfunction.write.sf_writer import StepFunctionWriter

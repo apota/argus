@@ -16,6 +16,7 @@ from .common.exceptions import AWSResourceError, ResourceNotFoundError
 from . import s3
 from . import awslambda  # Renamed from lambda to avoid keyword conflict
 from . import ecs
+from . import ec2
 from . import stepfunction
 from . import dynamodb
 from . import eventbridge
@@ -29,6 +30,7 @@ __all__ = [
     's3',
     'awslambda',
     'ecs',
+    'ec2',
     'stepfunction',
     'dynamodb',
     'eventbridge',
