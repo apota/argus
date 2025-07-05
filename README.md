@@ -2,7 +2,9 @@
 
 Argus is a Python library for exploring and managing AWS resources using Boto3. It provides a modular, organized approach to interact with various AWS services through a consistent interface.
 
-**This is perfect for people who don't like clicking around the AWS console (especially when you are managing several artifacts across multiple accounts and multiple environments), all that pointing and clicking slows you down.**
+# Target Audience
+
+- Devs who want to quickly toggle across multiple AWS accounts, environments to query the AWS landscaape. Using AWS console can slow you down.
 
 ## Features
 
