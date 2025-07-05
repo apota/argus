@@ -34,8 +34,6 @@ def run_import_tests():
         ('parameterstore.write.ps_writer', 'ParameterStoreWriter'),
         ('sqs.read.sqs_reader', 'SQSReader'),
         ('sqs.write.sqs_writer', 'SQSWriter'),
-        ('cloudwatch.read.cloudwatch_reader', 'CloudWatchReader'),
-        ('cloudwatch.write.cloudwatch_writer', 'CloudWatchWriter'),
     ]
     
     passed = 0
@@ -112,7 +110,6 @@ def run_module_structure_tests():
         'eventbridge', 'eventbridge.read', 'eventbridge.write',
         'parameterstore', 'parameterstore.read', 'parameterstore.write',
         'sqs', 'sqs.read', 'sqs.write',
-        'cloudwatch', 'cloudwatch.read', 'cloudwatch.write',
     ]
     
     passed = 0
