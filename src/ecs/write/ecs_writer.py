@@ -7,8 +7,8 @@ This module provides functionality for creating and managing AWS ECS resources.
 import logging
 from typing import Dict, List, Optional, Any
 from botocore.exceptions import ClientError
-from ...common.aws_client import AWSClientManager
-from ...common.exceptions import AWSResourceError, ResourceNotFoundError
+from common.aws_client import AWSClientManager
+from common.exceptions import AWSResourceError, ResourceNotFoundError
 
 logger = logging.getLogger(__name__)
 

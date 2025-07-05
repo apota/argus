@@ -6,8 +6,8 @@ from typing import List, Dict, Any, Optional
 from botocore.exceptions import ClientError
 import logging
 
-from ..common.aws_client import AWSClientManager
-from ..common.exceptions import AWSResourceException, AWSPermissionException
+from common.aws_client import AWSClientManager
+from common.exceptions import AWSResourceException, AWSPermissionException
 
 logger = logging.getLogger(__name__)
 

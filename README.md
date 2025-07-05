@@ -47,6 +47,13 @@ argus/
     │   ├── __init__.py
     │   ├── aws_client.py          # AWS client management
     │   └── exceptions.py          # Custom exception classes
+    ├── test/
+    │   ├── __init__.py
+    │   ├── README.md              # Test documentation
+    │   ├── test_runner.py         # Comprehensive test runner
+    │   ├── test_imports.py        # Import validation tests
+    │   ├── test_quick.py          # Quick functionality tests
+    │   └── test_common.py         # Unit tests with mocking
     ├── s3/
     │   ├── __init__.py
     │   ├── read/
@@ -126,19 +133,34 @@ export AWS_PROFILE=your-profile-name
 export AWS_DEFAULT_REGION=us-east-1
 ```
 
+## Installation
+
+### Option 1: Install from source (Recommended for development)
+```bash
+git clone https://github.com/your-org/argus.git
+cd argus
+pip install -e .
+```
+
+### Option 2: Install from PyPI (when available)
+```bash
+pip install argus-aws
+```
+
 ## Usage Examples
 
 ### S3 Operations
 
 #### Reading S3 Resources
 ```python
-from src.s3 import S3Reader
+from common.aws_client import AWSClientManager
+from s3.read.s3_reader import S3Reader
 
-# Initialize with default profile
-s3_reader = S3Reader()
+# Initialize AWS client manager
+client_manager = AWSClientManager('default', 'us-east-1')
 
-# Initialize with specific profile and region
-s3_reader = S3Reader(profile_name='production', region_name='us-west-2')
+# Initialize S3 reader
+s3_reader = S3Reader(client_manager)
 
 # List all buckets
 buckets = s3_reader.list_buckets()
@@ -160,7 +182,14 @@ print(f"Last modified: {metadata['LastModified']}")
 
 #### Writing S3 Resources
 ```python
-from src.s3 import S3Writer
+from common.aws_client import AWSClientManager
+from s3.write.s3_writer import S3Writer
+
+# Initialize AWS client manager
+client_manager = AWSClientManager('default', 'us-east-1')
+
+# Initialize S3 writer
+s3_writer = S3Writer(client_manager)
 
 # Initialize S3 writer
 s3_writer = S3Writer(profile_name='default')
@@ -206,7 +235,14 @@ s3_writer.set_bucket_policy('my-new-bucket', policy)
 
 #### Reading Lambda Resources
 ```python
-from src.lambda import LambdaReader
+from common.aws_client import AWSClientManager
+from awslambda.read.lambda_reader import LambdaReader
+
+# Initialize AWS client manager
+client_manager = AWSClientManager('default', 'us-east-1')
+
+# Initialize Lambda reader
+lambda_reader = LambdaReader(client_manager)
 
 # Initialize Lambda reader
 lambda_reader = LambdaReader(profile_name='default')
@@ -233,7 +269,14 @@ for layer in layers:
 
 #### Writing Lambda Resources
 ```python
-from src.lambda import LambdaWriter
+from common.aws_client import AWSClientManager
+from awslambda.write.lambda_writer import LambdaWriter
+
+# Initialize AWS client manager
+client_manager = AWSClientManager('default', 'us-east-1')
+
+# Initialize Lambda writer
+lambda_writer = LambdaWriter(client_manager)
 
 # Initialize Lambda writer
 lambda_writer = LambdaWriter(profile_name='default')
@@ -286,7 +329,14 @@ lambda_writer.update_function_code('my-new-function', zip_file=new_zip)
 
 #### Reading ECS Resources
 ```python
-from src.ecs import ECSReader
+from common.aws_client import AWSClientManager
+from ecs.read.ecs_reader import ECSReader
+
+# Initialize AWS client manager
+client_manager = AWSClientManager('default', 'us-east-1')
+
+# Initialize ECS reader
+ecs_reader = ECSReader(client_manager)
 
 # Initialize ECS reader
 ecs_reader = ECSReader(profile_name='default')
@@ -313,7 +363,14 @@ print(f"CPU: {task_def.get('cpu')}, Memory: {task_def.get('memory')}")
 
 #### Writing ECS Resources
 ```python
-from src.ecs import ECSWriter
+from common.aws_client import AWSClientManager
+from ecs.write.ecs_writer import ECSWriter
+
+# Initialize AWS client manager
+client_manager = AWSClientManager('default', 'us-east-1')
+
+# Initialize ECS writer
+ecs_writer = ECSWriter(client_manager)
 
 # Initialize ECS writer
 ecs_writer = ECSWriter(profile_name='default')
@@ -362,10 +419,12 @@ service = ecs_writer.create_service(
 Argus provides custom exception classes for better error handling:
 
 ```python
-from src.common.exceptions import AWSResourceError, ResourceNotFoundError
-from src.s3 import S3Reader
+from common.exceptions import AWSResourceError, ResourceNotFoundError
+from common.aws_client import AWSClientManager
+from s3.read.s3_reader import S3Reader
 
-s3_reader = S3Reader()
+client_manager = AWSClientManager('default', 'us-east-1')
+s3_reader = S3Reader(client_manager)
 
 try:
     bucket_info = s3_reader.get_bucket_info('non-existent-bucket')
@@ -389,8 +448,11 @@ logging.basicConfig(
 )
 
 # Now all Argus operations will log their activities
-from src.s3 import S3Reader
-s3_reader = S3Reader()
+from common.aws_client import AWSClientManager
+from s3.read.s3_reader import S3Reader
+
+client_manager = AWSClientManager('default', 'us-east-1')
+s3_reader = S3Reader(client_manager)
 buckets = s3_reader.list_buckets()  # This will log the operation
 ```
 
@@ -401,7 +463,7 @@ buckets = s3_reader.list_buckets()  # This will log the operation
 You can customize the underlying Boto3 client configuration:
 
 ```python
-from src.common.aws_client import AWSClientManager
+from common.aws_client import AWSClientManager
 
 # Initialize with custom configuration
 client_manager = AWSClientManager(
@@ -416,11 +478,16 @@ s3_client = client_manager.get_client('s3')
 ### Working with Multiple Regions
 
 ```python
-from src.s3 import S3Reader
+from common.aws_client import AWSClientManager
+from s3.read.s3_reader import S3Reader
 
 # Read from multiple regions
 regions = ['us-east-1', 'us-west-2', 'eu-west-1']
 all_buckets = []
+
+for region in regions:
+    client_manager = AWSClientManager('default', region)
+    s3_reader = S3Reader(client_manager)
 
 for region in regions:
     s3_reader = S3Reader(region_name=region)
@@ -480,7 +547,7 @@ If you encounter import errors, ensure you're running Python from the correct di
 ```bash
 cd argus
 export PYTHONPATH=$PYTHONPATH:$(pwd)
-python -c "from src.s3 import S3Reader; print('Import successful')"
+python -c "from s3.read.s3_reader import S3Reader; print('Import successful')"
 ```
 
 #### AWS Credential Issues

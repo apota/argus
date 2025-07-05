@@ -7,8 +7,8 @@ import json
 from typing import Dict, Any, Optional, List
 from botocore.exceptions import ClientError
 
-from ...common.aws_client import AWSClientManager
-from ...common.exceptions import AWSResourceError, AWSPermissionException, ResourceNotFoundError
+from common.aws_client import AWSClientManager
+from common.exceptions import AWSResourceError, AWSPermissionException, ResourceNotFoundError
 
 
 class EventBridgeWriter:

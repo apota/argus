@@ -8,8 +8,8 @@ import logging
 from typing import Dict, List, Optional, Any, Union
 from decimal import Decimal
 from botocore.exceptions import ClientError
-from ...common.aws_client import AWSClientManager
-from ...common.exceptions import AWSResourceError, ResourceNotFoundError
+from common.aws_client import AWSClientManager
+from common.exceptions import AWSResourceError, ResourceNotFoundError
 
 logger = logging.getLogger(__name__)
 

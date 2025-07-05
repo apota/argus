@@ -10,8 +10,8 @@ import zipfile
 import io
 from typing import Dict, List, Optional, Any, Union
 from botocore.exceptions import ClientError
-from ...common.aws_client import AWSClientManager
-from ...common.exceptions import AWSResourceError, ResourceNotFoundError
+from common.aws_client import AWSClientManager
+from common.exceptions import AWSResourceError, ResourceNotFoundError
 
 logger = logging.getLogger(__name__)
 

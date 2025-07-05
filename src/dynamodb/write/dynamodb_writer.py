@@ -7,8 +7,8 @@ from typing import Dict, Any, Optional, List, Union
 from botocore.exceptions import ClientError
 from decimal import Decimal
 
-from ...common.aws_client import AWSClientManager
-from ...common.exceptions import AWSResourceError, AWSPermissionException, ResourceNotFoundError
+from common.aws_client import AWSClientManager
+from common.exceptions import AWSResourceError, AWSPermissionException, ResourceNotFoundError
 
 
 class DynamoDBWriter:
