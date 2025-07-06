@@ -11,7 +11,7 @@ Argus is a Python library for exploring and managing AWS resources using Boto3. 
 - **Modular Structure**: Separate read and write modules for each AWS service
 - **Consistent Interface**: Unified approach across all AWS services using AWSClientManager pattern
 - **Profile Support**: Uses AWS credential profiles for authentication
-- **Comprehensive Coverage**: Supports major AWS services including S3, Lambda, ECS, Step Functions, DynamoDB, EventBridge, Parameter Store, SQS, EC2, and CloudWatch
+- **Comprehensive Coverage**: Supports major AWS services including S3, Lambda, ECS, Step Functions, DynamoDB, EventBridge, Parameter Store, SQS, EC2, Elastic Beanstalk, and CloudWatch
 - **Error Handling**: Custom exception handling for better error management
 - **Logging**: Built-in logging for debugging and monitoring
 
@@ -136,6 +136,12 @@ argus/
     │   │   └── sqs_reader.py      # SQS read operations
     │   └── write/
     │       └── sqs_writer.py      # SQS write operations
+    ├── ebs/
+    │   ├── __init__.py
+    │   ├── read/
+    │   │   └── ebs_reader.py      # Elastic Beanstalk read operations
+    │   └── write/
+    │       └── ebs_writer.py      # Elastic Beanstalk write operations
     └── cloudwatch/
         ├── __init__.py
         └── read/
@@ -909,6 +915,91 @@ sqs_writer.send_message_batch(queue_url, messages)
 sqs_writer.delete_message(queue_url, receipt_handle)
 ```
 
+### Elastic Beanstalk Operations
+
+#### Reading Elastic Beanstalk Resources
+```python
+from common.aws_client import AWSClientManager
+from ebs.read.ebs_reader import EBSReader
+
+# Initialize AWS client manager
+client_manager = AWSClientManager('default', 'us-east-1')
+
+# Initialize EBS reader
+ebs_reader = EBSReader(client_manager)
+
+# List all applications
+applications = ebs_reader.list_applications()
+for app in applications:
+    print(f"Application: {app['ApplicationName']}")
+
+# Get specific application
+app_details = ebs_reader.get_application('my-web-app')
+print(f"Application ARN: {app_details['ApplicationArn']}")
+
+# List environments for an application
+environments = ebs_reader.list_environments('my-web-app')
+for env in environments:
+    print(f"Environment: {env['EnvironmentName']}, Status: {env['Status']}")
+
+# Get environment health
+health = ebs_reader.get_environment_health(environment_name='my-web-app-prod')
+print(f"Health Status: {health['HealthStatus']}")
+
+# List application versions
+versions = ebs_reader.list_application_versions('my-web-app')
+for version in versions:
+    print(f"Version: {version['VersionLabel']}, Status: {version['Status']}")
+```
+
+#### Writing Elastic Beanstalk Resources
+```python
+from common.aws_client import AWSClientManager
+from ebs.write.ebs_writer import EBSWriter
+
+# Initialize AWS client manager
+client_manager = AWSClientManager('default', 'us-east-1')
+
+# Initialize EBS writer
+ebs_writer = EBSWriter(client_manager)
+
+# Create a new application
+application = ebs_writer.create_application(
+    application_name='my-new-app',
+    description='My new web application'
+)
+
+# Create application version
+source_bundle = {
+    'S3Bucket': 'my-app-bucket',
+    'S3Key': 'app-v1.0.zip'
+}
+version = ebs_writer.create_application_version(
+    application_name='my-new-app',
+    version_label='v1.0',
+    source_bundle=source_bundle,
+    description='Initial version'
+)
+
+# Create environment
+environment = ebs_writer.create_environment(
+    application_name='my-new-app',
+    environment_name='my-new-app-prod',
+    solution_stack_name='64bit Amazon Linux 2 v5.8.0 running Node.js 18',
+    version_label='v1.0',
+    description='Production environment'
+)
+
+# Update environment with new version
+ebs_writer.update_environment(
+    environment_name='my-new-app-prod',
+    version_label='v2.0'
+)
+
+# Terminate environment
+ebs_writer.terminate_environment(environment_name='my-new-app-prod')
+```
+
 ### CloudWatch Operations
 
 #### Reading CloudWatch Resources
@@ -1063,6 +1154,7 @@ The following AWS services are implemented with comprehensive read and write ope
 - **EventBridge**: Complete event bus and rule management
 - **Parameter Store**: Complete parameter management with hierarchical organization
 - **SQS**: Complete queue and message operations
+- **Elastic Beanstalk**: Complete application and environment lifecycle management
 - **CloudWatch**: Read operations for metrics, logs, and alarms
 
 ### Key Features by Service
@@ -1109,6 +1201,13 @@ The following AWS services are implemented with comprehensive read and write ope
 - **Message Operations**: Send, receive, and delete messages
 - **Batch Operations**: Send and delete messages in batches
 - **Queue Attributes**: Configure and manage queue settings
+
+#### Elastic Beanstalk
+- **Application Management**: Create, deploy, and manage applications
+- **Environment Operations**: Full environment lifecycle including creation, updates, and termination
+- **Version Control**: Manage application versions and deployments
+- **Configuration Management**: Handle platform configurations and option settings
+- **Health Monitoring**: Access environment health and resource information
 
 #### CloudWatch
 - **Metrics Retrieval**: Get CloudWatch metrics with flexible filtering

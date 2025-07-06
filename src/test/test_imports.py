@@ -64,6 +64,11 @@ def test_imports():
         from sqs.write.sqs_writer import SQSWriter
         print("✅ SQS modules imported successfully")
         
+        # Test EBS modules
+        from ebs.read.ebs_reader import EBSReader
+        from ebs.write.ebs_writer import EBSWriter
+        print("✅ EBS modules imported successfully")
+        
         return True
         
     except ImportError as e:
