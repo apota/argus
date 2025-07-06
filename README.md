@@ -11,7 +11,7 @@ Argus is a Python library for exploring and managing AWS resources using Boto3. 
 - **Modular Structure**: Separate read and write modules for each AWS service
 - **Consistent Interface**: Unified approach across all AWS services using AWSClientManager pattern
 - **Profile Support**: Uses AWS credential profiles for authentication
-- **Comprehensive Coverage**: Supports major AWS services including S3, Lambda, ECS, EC2, Step Functions, DynamoDB, EventBridge, Parameter Store, and SQS
+- **Comprehensive Coverage**: Supports major AWS services including S3, Lambda, ECS, Step Functions, DynamoDB, EventBridge, Parameter Store, SQS, EC2, and CloudWatch
 - **Error Handling**: Custom exception handling for better error management
 - **Logging**: Built-in logging for debugging and monitoring
 
@@ -130,12 +130,22 @@ argus/
     │   │   └── ps_reader.py       # Parameter Store read operations
     │   └── write/
     │       └── ps_writer.py       # Parameter Store write operations
-    └── sqs/
+    ├── sqs/
+    │   ├── __init__.py
+    │   ├── read/
+    │   │   └── sqs_reader.py      # SQS read operations
+    │   └── write/
+    │       └── sqs_writer.py      # SQS write operations
+    ├── ec2/
+    │   ├── __init__.py
+    │   ├── read/
+    │   │   └── ec2_reader.py      # EC2 read operations
+    │   └── write/
+    │       └── ec2_writer.py      # EC2 write operations
+    └── cloudwatch/
         ├── __init__.py
-        ├── read/
-        │   └── sqs_reader.py      # SQS read operations
-        └── write/
-            └── sqs_writer.py      # SQS write operations
+        └── read/
+            └── cloudwatch_reader.py # CloudWatch read operations
 ```
 
 ## AWS Credentials Configuration
@@ -905,6 +915,115 @@ sqs_writer.send_message_batch(queue_url, messages)
 sqs_writer.delete_message(queue_url, receipt_handle)
 ```
 
+### EC2 Operations
+
+#### Reading EC2 Resources
+```python
+from common.aws_client import AWSClientManager
+from ec2.read.ec2_reader import EC2Reader
+
+# Initialize AWS client manager
+client_manager = AWSClientManager('default', 'us-east-1')
+
+# Initialize EC2 reader
+ec2_reader = EC2Reader(client_manager)
+
+# List all instances
+instances = ec2_reader.list_instances()
+for instance in instances:
+    print(f"Instance ID: {instance['InstanceId']}, State: {instance['State']['Name']}")
+
+# Get instance details
+instance_details = ec2_reader.get_instance_details('i-1234567890abcdef0')
+print(f"Instance type: {instance_details['InstanceType']}")
+
+# List security groups
+security_groups = ec2_reader.list_security_groups()
+for sg in security_groups:
+    print(f"Security Group: {sg['GroupName']} ({sg['GroupId']})")
+
+# List VPCs
+vpcs = ec2_reader.list_vpcs()
+for vpc in vpcs:
+    print(f"VPC: {vpc['VpcId']} ({vpc['CidrBlock']})")
+```
+
+#### Writing EC2 Resources
+```python
+from common.aws_client import AWSClientManager
+from ec2.write.ec2_writer import EC2Writer
+
+# Initialize AWS client manager
+client_manager = AWSClientManager('default', 'us-east-1')
+
+# Initialize EC2 writer
+ec2_writer = EC2Writer(client_manager)
+
+# Create security group
+sg_id = ec2_writer.create_security_group(
+    group_name='my-security-group',
+    description='Security group for my application',
+    vpc_id='vpc-12345678'
+)
+
+# Launch instance
+instance_id = ec2_writer.launch_instance(
+    image_id='ami-12345678',
+    instance_type='t2.micro',
+    key_name='my-key-pair',
+    security_group_ids=[sg_id],
+    subnet_id='subnet-12345678'
+)
+
+# Stop instance
+ec2_writer.stop_instance(instance_id)
+
+# Terminate instance
+ec2_writer.terminate_instance(instance_id)
+```
+
+### CloudWatch Operations
+
+#### Reading CloudWatch Resources
+```python
+from common.aws_client import AWSClientManager
+from cloudwatch.read.cloudwatch_reader import CloudWatchReader
+
+# Initialize AWS client manager
+client_manager = AWSClientManager('default', 'us-east-1')
+
+# Initialize CloudWatch reader
+cw_reader = CloudWatchReader(client_manager)
+
+# List metrics
+metrics = cw_reader.list_metrics(namespace='AWS/EC2')
+for metric in metrics:
+    print(f"Metric: {metric['MetricName']}")
+
+# Get metric statistics
+stats = cw_reader.get_metric_statistics(
+    namespace='AWS/EC2',
+    metric_name='CPUUtilization',
+    dimensions=[
+        {'Name': 'InstanceId', 'Value': 'i-1234567890abcdef0'}
+    ],
+    start_time='2023-01-01T00:00:00Z',
+    end_time='2023-01-02T00:00:00Z',
+    period=3600,
+    statistics=['Average', 'Maximum']
+)
+
+# List alarms
+alarms = cw_reader.list_alarms()
+for alarm in alarms:
+    print(f"Alarm: {alarm['AlarmName']}, State: {alarm['StateValue']}")
+
+# Get log groups
+log_groups = cw_reader.list_log_groups()
+for group in log_groups:
+    print(f"Log Group: {group['logGroupName']}")
+```
+
 ## Error Handling
 
 Argus provides custom exception classes for better error handling:
@@ -1017,6 +1136,8 @@ The following AWS services are implemented with comprehensive read and write ope
 - **EventBridge**: Complete event bus and rule management
 - **Parameter Store**: Complete parameter management with hierarchical organization
 - **SQS**: Complete queue and message operations
+- **EC2**: Complete read/write operations for instances, security groups, and VPCs
+- **CloudWatch**: Read operations for metrics, logs, and alarms
 
 ### Key Features by Service
 
@@ -1062,6 +1183,18 @@ The following AWS services are implemented with comprehensive read and write ope
 - **Message Operations**: Send, receive, and delete messages
 - **Batch Operations**: Send and delete messages in batches
 - **Queue Attributes**: Configure and manage queue settings
+
+#### EC2
+- **Instance Management**: Complete instance lifecycle operations
+- **Security Group Operations**: Create, modify, and manage security groups
+- **VPC Management**: Virtual Private Cloud operations and subnet management
+- **Key Pair Operations**: Manage EC2 key pairs for instance access
+
+#### CloudWatch
+- **Metrics Retrieval**: Get CloudWatch metrics with flexible filtering
+- **Log Operations**: Access and search CloudWatch logs
+- **Alarm Management**: Read CloudWatch alarms and their states
+- **Dashboard Access**: Retrieve CloudWatch dashboard configurations
 
 ## Best Practices
 

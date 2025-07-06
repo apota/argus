@@ -36,6 +36,7 @@ def run_import_tests():
         ('parameterstore.write.ps_writer', 'ParameterStoreWriter'),
         ('sqs.read.sqs_reader', 'SQSReader'),
         ('sqs.write.sqs_writer', 'SQSWriter'),
+        ('cloudwatch.read.cloudwatch_reader', 'CloudWatchReader'),
     ]
     
     passed = 0
