@@ -100,6 +100,12 @@ argus/
     │   │   └── ecs_reader.py      # ECS read operations
     │   └── write/
     │       └── ecs_writer.py      # ECS write operations
+    ├── ec2/
+    │   ├── __init__.py
+    │   ├── read/
+    │   │   └── ec2_reader.py      # EC2 read operations
+    │   └── write/
+    │       └── ec2_writer.py      # EC2 write operations
     ├── stepfunction/
     │   ├── __init__.py
     │   ├── read/
@@ -438,6 +444,128 @@ service = ecs_writer.create_service(
 
 # Scale service
 ecs_writer.scale_service('my-web-service', 'my-new-cluster', 5)
+```
+
+### EC2 Operations
+
+#### Reading EC2 Resources
+```python
+from common.aws_client import AWSClientManager
+from ec2.read.ec2_reader import EC2Reader
+
+# Initialize AWS client manager
+client_manager = AWSClientManager('default', 'us-east-1')
+
+# Initialize EC2 reader
+ec2_reader = EC2Reader(client_manager)
+
+# List all instances
+instances = ec2_reader.list_instances()
+for instance in instances:
+    print(f"Instance: {instance['InstanceId']}, State: {instance['State']['Name']}")
+
+# Get specific instance details
+instance = ec2_reader.get_instance('i-1234567890abcdef0')
+print(f"Instance Type: {instance['InstanceType']}")
+print(f"Public IP: {instance.get('PublicIpAddress', 'N/A')}")
+
+# List security groups
+security_groups = ec2_reader.list_security_groups()
+for sg in security_groups:
+    print(f"Security Group: {sg['GroupId']}, Name: {sg['GroupName']}")
+
+# List key pairs
+key_pairs = ec2_reader.list_key_pairs()
+for kp in key_pairs:
+    print(f"Key Pair: {kp['KeyName']}")
+
+# List VPCs
+vpcs = ec2_reader.list_vpcs()
+for vpc in vpcs:
+    print(f"VPC: {vpc['VpcId']}, CIDR: {vpc['CidrBlock']}")
+
+# List subnets for a VPC
+subnets = ec2_reader.list_subnets(vpc_id='vpc-12345678')
+for subnet in subnets:
+    print(f"Subnet: {subnet['SubnetId']}, CIDR: {subnet['CidrBlock']}")
+```
+
+#### Writing EC2 Resources
+```python
+from common.aws_client import AWSClientManager
+from ec2.write.ec2_writer import EC2Writer
+
+# Initialize AWS client manager
+client_manager = AWSClientManager('default', 'us-east-1')
+
+# Initialize EC2 writer
+ec2_writer = EC2Writer(client_manager)
+
+# Launch new instances
+response = ec2_writer.create_instance(
+    image_id='ami-0abcdef1234567890',
+    instance_type='t2.micro',
+    key_name='my-key-pair',
+    security_group_ids=['sg-12345678'],
+    subnet_id='subnet-12345678',
+    min_count=1,
+    max_count=1
+)
+
+instance_id = response['Instances'][0]['InstanceId']
+print(f"Launched instance: {instance_id}")
+
+# Start a stopped instance
+ec2_writer.start_instance(instance_id)
+
+# Stop a running instance
+ec2_writer.stop_instance(instance_id)
+
+# Reboot an instance
+ec2_writer.reboot_instance(instance_id)
+
+# Create a security group
+sg_response = ec2_writer.create_security_group(
+    group_name='my-web-sg',
+    description='Security group for web servers',
+    vpc_id='vpc-12345678'
+)
+
+group_id = sg_response['GroupId']
+
+# Add inbound rules to security group
+ip_permissions = [
+    {
+        'IpProtocol': 'tcp',
+        'FromPort': 80,
+        'ToPort': 80,
+        'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+    },
+    {
+        'IpProtocol': 'tcp',
+        'FromPort': 443,
+        'ToPort': 443,
+        'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+    }
+]
+
+ec2_writer.authorize_security_group_ingress(group_id, ip_permissions)
+
+# Create a key pair
+key_response = ec2_writer.create_key_pair('my-new-key')
+print(f"Created key pair: {key_response['KeyName']}")
+
+# Create tags for resources
+ec2_writer.create_tags(
+    resource_ids=[instance_id, group_id],
+    tags=[
+        {'Key': 'Environment', 'Value': 'Development'},
+        {'Key': 'Project', 'Value': 'MyApp'}
+    ]
+)
+
+# Terminate instance when done
+ec2_writer.terminate_instance(instance_id)
 ```
 
 ### Step Functions Operations
@@ -1002,6 +1130,7 @@ The following AWS services are implemented with comprehensive read and write ope
 - **S3**: Complete read/write operations for buckets and objects
 - **Lambda**: Complete read/write operations for functions, layers, and aliases  
 - **ECS**: Complete read/write operations for clusters, services, and task definitions
+- **EC2**: Complete read/write operations for instances, security groups, key pairs, and VPCs
 - **Step Functions**: Complete state machine management and execution control
 - **DynamoDB**: Complete table and item operations with advanced querying capabilities
 - **EventBridge**: Complete event bus and rule management
@@ -1017,6 +1146,13 @@ The following AWS services are implemented with comprehensive read and write ope
 - **Service Operations**: Create, update, and scale services
 - **Task Management**: Complete task lifecycle management
 - **Task Definitions**: Register and manage task definitions
+
+#### EC2
+- **Instance Management**: Launch, stop, start, reboot, and terminate instances
+- **Security Groups**: Create, modify, and delete security groups and rules
+- **Key Pair Management**: Create and delete SSH key pairs
+- **VPC Operations**: List VPCs, subnets, and network resources
+- **Tagging**: Add and remove tags from EC2 resources
 
 #### Step Functions
 - **State Machine Management**: Create, update, and delete state machines
