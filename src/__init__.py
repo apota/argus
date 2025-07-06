@@ -23,6 +23,7 @@ from . import eventbridge
 from . import parameterstore
 from . import sqs
 from . import ebs
+from . import eks
 from . import cloudwatch
 
 __all__ = [
@@ -39,5 +40,6 @@ __all__ = [
     'parameterstore',
     'sqs',
     'ebs',
+    'eks',
     'cloudwatch'
 ]

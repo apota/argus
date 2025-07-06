@@ -11,7 +11,7 @@ Argus is a Python library for exploring and managing AWS resources using Boto3. 
 - **Modular Structure**: Separate read and write modules for each AWS service
 - **Consistent Interface**: Unified approach across all AWS services using AWSClientManager pattern
 - **Profile Support**: Uses AWS credential profiles for authentication
-- **Comprehensive Coverage**: Supports major AWS services including S3, Lambda, ECS, Step Functions, DynamoDB, EventBridge, Parameter Store, SQS, EC2, Elastic Beanstalk, and CloudWatch
+- **Comprehensive Coverage**: Supports major AWS services including S3, Lambda, ECS, Step Functions, DynamoDB, EventBridge, Parameter Store, SQS, EC2, Elastic Beanstalk, EKS, and CloudWatch
 - **Error Handling**: Custom exception handling for better error management
 - **Logging**: Built-in logging for debugging and monitoring
 
@@ -142,6 +142,12 @@ argus/
     │   │   └── ebs_reader.py      # Elastic Beanstalk read operations
     │   └── write/
     │       └── ebs_writer.py      # Elastic Beanstalk write operations
+    ├── eks/
+    │   ├── __init__.py
+    │   ├── read/
+    │   │   └── eks_reader.py      # Elastic Kubernetes Service read operations
+    │   └── write/
+    │       └── eks_writer.py      # Elastic Kubernetes Service write operations
     └── cloudwatch/
         ├── __init__.py
         └── read/
@@ -1000,6 +1006,129 @@ ebs_writer.update_environment(
 ebs_writer.terminate_environment(environment_name='my-new-app-prod')
 ```
 
+### EKS Operations
+
+#### Reading EKS Resources
+```python
+from common.aws_client import AWSClientManager
+from eks.read.eks_reader import EKSReader
+
+# Initialize AWS client manager
+client_manager = AWSClientManager('default', 'us-east-1')
+
+# Initialize EKS reader
+eks_reader = EKSReader(client_manager)
+
+# List all clusters
+clusters = eks_reader.list_clusters()
+for cluster_name in clusters:
+    print(f"Cluster: {cluster_name}")
+
+# Get cluster details
+cluster_details = eks_reader.describe_cluster('my-cluster')
+if cluster_details:
+    print(f"Status: {cluster_details['status']}")
+    print(f"Version: {cluster_details['version']}")
+    print(f"Endpoint: {cluster_details['endpoint']}")
+
+# List node groups
+nodegroups = eks_reader.list_nodegroups('my-cluster')
+for ng in nodegroups:
+    print(f"Node Group: {ng}")
+
+# Get node group details
+ng_details = eks_reader.describe_nodegroup('my-cluster', 'my-nodegroup')
+if ng_details:
+    print(f"Node Group Status: {ng_details['status']}")
+    print(f"Instance Types: {ng_details['instanceTypes']}")
+
+# List Fargate profiles
+fargate_profiles = eks_reader.list_fargate_profiles('my-cluster')
+for profile in fargate_profiles:
+    print(f"Fargate Profile: {profile}")
+
+# List add-ons
+addons = eks_reader.list_addons('my-cluster')
+for addon in addons:
+    print(f"Add-on: {addon}")
+```
+
+#### Writing EKS Resources
+```python
+from common.aws_client import AWSClientManager
+from eks.write.eks_writer import EKSWriter
+
+# Initialize AWS client manager
+client_manager = AWSClientManager('default', 'us-east-1')
+
+# Initialize EKS writer
+eks_writer = EKSWriter(client_manager)
+
+# Create a new cluster
+vpc_config = {
+    'subnetIds': ['subnet-12345', 'subnet-67890'],
+    'endpointConfigAccess': {
+        'privateAccess': True,
+        'publicAccess': True
+    }
+}
+
+cluster = eks_writer.create_cluster(
+    name='my-new-cluster',
+    version='1.28',
+    role_arn='arn:aws:iam::123456789012:role/eks-service-role',
+    resources_vpc_config=vpc_config,
+    tags={'Environment': 'production'}
+)
+
+# Create a managed node group
+scaling_config = {
+    'minSize': 1,
+    'maxSize': 5,
+    'desiredSize': 2
+}
+
+nodegroup = eks_writer.create_nodegroup(
+    cluster_name='my-new-cluster',
+    nodegroup_name='my-nodegroup',
+    subnets=['subnet-12345', 'subnet-67890'],
+    node_role='arn:aws:iam::123456789012:role/NodeInstanceRole',
+    scaling_config=scaling_config,
+    instance_types=['t3.medium'],
+    ami_type='AL2_x86_64'
+)
+
+# Create Fargate profile
+selectors = [
+    {
+        'namespace': 'default',
+        'labels': {'app': 'my-app'}
+    }
+]
+
+fargate_profile = eks_writer.create_fargate_profile(
+    fargate_profile_name='my-fargate-profile',
+    cluster_name='my-new-cluster',
+    pod_execution_role_arn='arn:aws:iam::123456789012:role/eks-fargate-profile',
+    subnets=['subnet-12345', 'subnet-67890'],
+    selectors=selectors
+)
+
+# Install an add-on
+addon = eks_writer.create_addon(
+    cluster_name='my-new-cluster',
+    addon_name='vpc-cni',
+    addon_version='v1.15.1-eksbuild.1',
+    resolve_conflicts='OVERWRITE'
+)
+
+# Delete resources (cleanup)
+eks_writer.delete_addon('my-new-cluster', 'vpc-cni')
+eks_writer.delete_fargate_profile('my-new-cluster', 'my-fargate-profile')
+eks_writer.delete_nodegroup('my-new-cluster', 'my-nodegroup')
+eks_writer.delete_cluster('my-new-cluster')
+```
+
 ### CloudWatch Operations
 
 #### Reading CloudWatch Resources
@@ -1155,6 +1284,7 @@ The following AWS services are implemented with comprehensive read and write ope
 - **Parameter Store**: Complete parameter management with hierarchical organization
 - **SQS**: Complete queue and message operations
 - **Elastic Beanstalk**: Complete application and environment lifecycle management
+- **EKS**: Complete Kubernetes cluster and node group management
 - **CloudWatch**: Read operations for metrics, logs, and alarms
 
 ### Key Features by Service
@@ -1208,6 +1338,13 @@ The following AWS services are implemented with comprehensive read and write ope
 - **Version Control**: Manage application versions and deployments
 - **Configuration Management**: Handle platform configurations and option settings
 - **Health Monitoring**: Access environment health and resource information
+
+#### EKS
+- **Cluster Management**: Create, update, and delete Kubernetes clusters
+- **Node Group Operations**: Manage managed node groups with scaling and configuration
+- **Fargate Profiles**: Create and manage serverless Fargate profiles
+- **Add-on Management**: Install, update, and manage EKS add-ons
+- **Identity Provider Integration**: Configure OIDC identity providers
 
 #### CloudWatch
 - **Metrics Retrieval**: Get CloudWatch metrics with flexible filtering

@@ -38,6 +38,8 @@ def run_import_tests():
         ('sqs.write.sqs_writer', 'SQSWriter'),
         ('ebs.read.ebs_reader', 'EBSReader'),
         ('ebs.write.ebs_writer', 'EBSWriter'),
+        ('eks.read.eks_reader', 'EKSReader'),
+        ('eks.write.eks_writer', 'EKSWriter'),
         ('cloudwatch.read.cloudwatch_reader', 'CloudWatchReader'),
     ]
     
