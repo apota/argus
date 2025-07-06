@@ -69,6 +69,11 @@ def test_imports():
         from ebs.write.ebs_writer import EBSWriter
         print("✅ EBS modules imported successfully")
         
+        # Test EKS modules
+        from eks.read.eks_reader import EKSReader
+        from eks.write.eks_writer import EKSWriter
+        print("✅ EKS modules imported successfully")
+        
         return True
         
     except ImportError as e:
