@@ -22,7 +22,7 @@ from . import dynamodb
 from . import eventbridge
 from . import parameterstore
 from . import sqs
-from . import ec2
+from . import ebs
 from . import cloudwatch
 
 __all__ = [
@@ -38,6 +38,6 @@ __all__ = [
     'eventbridge',
     'parameterstore',
     'sqs',
-    'ec2',
+    'ebs',
     'cloudwatch'
 ]
