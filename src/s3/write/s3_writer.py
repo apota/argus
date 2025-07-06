@@ -6,6 +6,7 @@ from typing import Dict, Any, Optional, BinaryIO
 from botocore.exceptions import ClientError
 import logging
 import json
+from datetime import datetime, timezone
 
 from common.aws_client import AWSClientManager
 from common.exceptions import AWSResourceException, AWSPermissionException
@@ -323,6 +324,152 @@ class S3Writer:
                 raise AWSPermissionException('S3', 'set_bucket_encryption', str(e))
             raise AWSResourceException('S3', 'set_bucket_encryption', str(e))
     
+    def touch_object(self, bucket_name: str, object_key: str, 
+                    preserve_metadata: bool = True, custom_metadata: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+        """
+        Touch an S3 object to update its timestamp by copying it with new metadata.
+        
+        This operation updates the LastModified timestamp of an S3 object by performing
+        a copy operation on itself with updated metadata. This is useful for cache
+        invalidation, triggering events, or updating object timestamps.
+        
+        Args:
+            bucket_name (str): Name of the bucket containing the object.
+            object_key (str): Key of the object to touch.
+            preserve_metadata (bool): Whether to preserve existing metadata. Default is True.
+            custom_metadata (Dict, optional): Additional metadata to add/update.
+        
+        Returns:
+            Dict: Result of touch operation including new timestamp and metadata.
+        
+        Raises:
+            AWSResourceException: If the touch operation fails.
+        """
+        try:
+            from datetime import datetime, timezone
+            
+            # First, get the current object metadata and properties
+            head_response = self.s3_client.head_object(Bucket=bucket_name, Key=object_key)
+            
+            # Prepare copy arguments
+            copy_args = {
+                'Bucket': bucket_name,
+                'Key': object_key,
+                'CopySource': {'Bucket': bucket_name, 'Key': object_key},
+                'MetadataDirective': 'REPLACE'
+            }
+            
+            # Handle metadata
+            metadata = {}
+            if preserve_metadata and 'Metadata' in head_response:
+                metadata.update(head_response['Metadata'])
+            
+            # Add custom metadata if provided
+            if custom_metadata:
+                metadata.update(custom_metadata)
+            
+            # Add/update touch timestamp
+            metadata['touched-at'] = datetime.now(timezone.utc).isoformat()
+            
+            copy_args['Metadata'] = metadata
+            
+            # Preserve content type if it exists
+            if 'ContentType' in head_response:
+                copy_args['ContentType'] = head_response['ContentType']
+            
+            # Preserve content encoding if it exists
+            if 'ContentEncoding' in head_response:
+                copy_args['ContentEncoding'] = head_response['ContentEncoding']
+            
+            # Preserve cache control if it exists
+            if 'CacheControl' in head_response:
+                copy_args['CacheControl'] = head_response['CacheControl']
+            
+            # Perform the copy operation (which updates the timestamp)
+            copy_response = self.s3_client.copy_object(**copy_args)
+            
+            # Get updated object info
+            updated_head = self.s3_client.head_object(Bucket=bucket_name, Key=object_key)
+            
+            logger.info(f"Successfully touched object '{object_key}' in bucket '{bucket_name}'")
+            
+            return {
+                'bucket_name': bucket_name,
+                'object_key': object_key,
+                'previous_last_modified': head_response.get('LastModified'),
+                'new_last_modified': updated_head.get('LastModified'),
+                'etag': copy_response.get('CopyObjectResult', {}).get('ETag', '').strip('"'),
+                'version_id': copy_response.get('VersionId'),
+                'metadata': metadata,
+                'touched_at': metadata.get('touched-at'),
+                'operation': 'touch_successful'
+            }
+            
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'NoSuchBucket':
+                raise AWSResourceException('S3', 'touch_object', f"Bucket '{bucket_name}' does not exist")
+            if e.response['Error']['Code'] == 'NoSuchKey':
+                raise AWSResourceException('S3', 'touch_object', f"Object '{object_key}' does not exist in bucket '{bucket_name}'")
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise AWSPermissionException('S3', 'touch_object', str(e))
+            raise AWSResourceException('S3', 'touch_object', str(e))
+    
+    def batch_touch_objects(self, bucket_name: str, object_keys: list, 
+                           preserve_metadata: bool = True, custom_metadata: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+        """
+        Touch multiple S3 objects to update their timestamps.
+        
+        Args:
+            bucket_name (str): Name of the bucket containing the objects.
+            object_keys (list): List of object keys to touch.
+            preserve_metadata (bool): Whether to preserve existing metadata. Default is True.
+            custom_metadata (Dict, optional): Additional metadata to add/update for all objects.
+        
+        Returns:
+            Dict: Results of batch touch operation with success/failure counts.
+        
+        Raises:
+            AWSResourceException: If the batch operation fails completely.
+        """
+        try:
+            results = {
+                'bucket_name': bucket_name,
+                'total_objects': len(object_keys),
+                'successful_touches': 0,
+                'failed_touches': 0,
+                'touched_objects': [],
+                'failed_objects': []
+            }
+            
+            for object_key in object_keys:
+                try:
+                    touch_result = self.touch_object(
+                        bucket_name=bucket_name,
+                        object_key=object_key,
+                        preserve_metadata=preserve_metadata,
+                        custom_metadata=custom_metadata
+                    )
+                    results['successful_touches'] += 1
+                    results['touched_objects'].append({
+                        'object_key': object_key,
+                        'new_last_modified': touch_result['new_last_modified'],
+                        'touched_at': touch_result['touched_at']
+                    })
+                    
+                except Exception as e:
+                    results['failed_touches'] += 1
+                    results['failed_objects'].append({
+                        'object_key': object_key,
+                        'error': str(e)
+                    })
+                    logger.error(f"Failed to touch object '{object_key}': {str(e)}")
+            
+            logger.info(f"Batch touch completed: {results['successful_touches']}/{results['total_objects']} objects touched successfully")
+            return results
+            
+        except Exception as e:
+            raise AWSResourceException('S3', 'batch_touch_objects', f"Batch touch operation failed: {str(e)}")
+
     def _empty_bucket(self, bucket_name: str) -> None:
         """Delete all objects in a bucket."""
         try:
