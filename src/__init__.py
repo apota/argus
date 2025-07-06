@@ -21,6 +21,8 @@ from . import dynamodb
 from . import eventbridge
 from . import parameterstore
 from . import sqs
+from . import ec2
+from . import cloudwatch
 
 __all__ = [
     'AWSClientManager',
@@ -33,5 +35,7 @@ __all__ = [
     'dynamodb',
     'eventbridge',
     'parameterstore',
-    'sqs'
+    'sqs',
+    'ec2',
+    'cloudwatch'
 ]
